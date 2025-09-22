@@ -1,0 +1,247 @@
+/* Global */
+:root {
+  --bg: #171a21; /* Steam dark */
+  --fg: #c7d5e0; /* Steam light text */
+  --muted: #8f98a0; /* Steam muted */
+  --accent: #66c0f4; /* Steam blue */
+  --chip: #2a475e; /* Steam pill/chip */
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial;
+  background: var(--bg);
+  color: var(--fg);
+}
+header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a475e;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: linear-gradient(180deg, #1b2838, #171a21 85%);
+}
+h1 {
+  font-size: 18px;
+  margin: 0 12px 0 0;
+}
+input,
+select,
+button {
+  background: #1b2838;
+  color: var(--fg);
+  border: 1px solid #2a475e;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.pill {
+  display: inline-block;
+  white-space: nowrap;
+  background: var(--chip);
+  border: 1px solid #2a475e;
+  color: var(--fg);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Layout */
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: calc(100% - 66px);
+  box-sizing: border-box;
+}
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.scroll {
+  overflow: auto;
+  max-height: 60vh;
+}
+.section-title {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 16px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Cards / Panels */
+.game-item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.game-item:hover {
+  background: #0b1220;
+}
+.game-item.active {
+  background: #0b1220;
+  outline: 1px solid var(--accent);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+}
+.stat .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.stat .value {
+  font-size: 14px;
+}
+.stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.panel {
+  padding: 8px 12px;
+  border: 1px solid #2a475e;
+  border-radius: 12px;
+  background: #1b2838;
+}
+
+/* Loading mask */
+.loading-mask { position: relative; padding: 8px; }
+.loading-row { display: flex; gap: 8px; align-items: center; }
+.spinner {
+  width: 14px; height: 14px; border: 2px solid var(--accent);
+  border-top-color: transparent; border-radius: 50%; display: inline-block;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.timeline-wrap {
+  overflow: auto;
+  border: 1px solid #334155;
+  border-radius: 12px;
+}
+/* Highlight for search hit */
+mark.hit { background: #fde04733; color: #fde047; border-radius: 3px; padding: 0 2px; }
+
+.svgwrap {
+  width: 100%;
+  min-width: 600px;
+}
+.legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+}
+.legend .chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.legend .swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.row-label {
+  font-size: 12px;
+  fill: #cbd5e1;
+}
+.tick {
+  stroke: #334155;
+  stroke-width: 1;
+}
+.bar {
+  rx: 3;
+  ry: 3;
+  opacity: 0.9;
+}
+.bar:hover {
+  opacity: 1;
+  outline: 1px solid white;
+}
+.tooltip {
+  position: fixed;
+  pointer-events: none;
+  background: #000;
+  color: #fff;
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 10;
+  max-width: 360px;
+}
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Summary */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  background: #0b1220;
+}
+.summary .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.summary .value {
+  font-size: 18px;
+  font-weight: 600;
+}
+.chart {
+  width: 100%;
+  height: 120px;
+  border: 1px solid #2a475e;
+  border-radius: 10px;
+  background: #1b2838;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+.barx {
+  background: linear-gradient(180deg, #38bdf8, #2563eb);
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+}
+.barx.dim {
+  opacity: 0.35;
+}
+.chip-link {
+  cursor: pointer;
+}

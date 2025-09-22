@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": ["node", "vite/client"],
+    "baseUrl": ".",
+    "paths": {
+      "@src/*": ["web/src/*"],
+      "@charts/*": ["web/src/charts/*"],
+      "@state/*": ["web/src/state/*"],
+      "@utils/*": ["web/src/utils/*"],
+      "@aggregations/*": ["web/src/aggregations/*"],
+      "@workers/*": ["web/src/workers/*"],
+      "@i18n/*": ["web/src/i18n/*"],
+      "@types": ["web/src/types/index.ts"],
+      "@types/*": ["web/src/types/*"]
+    }
+  },
+  "include": ["web/**/*", "vite.config.ts"],
+  "exclude": ["node_modules", "web/dist"]
+}

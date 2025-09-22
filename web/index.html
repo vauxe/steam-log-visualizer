@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Steam Session Visualization</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <header class="steam-header">
+      <h1 id="title">Steam Session Visualization</h1>
+      <div class="controls">
+        <select id="langSelect" title="Language">
+          <option value="en" selected>EN</option>
+          <option value="zh-CN">中文</option>
+        </select>
+      </div>
+    </header>
+
+    <main>
+      <section class="panel" id="sectionA" style="display: flex; flex-direction: column; gap: 12px">
+        <div
+          id="uploadDrop"
+          class="panel"
+          style="
+            border: 1px dashed #294357;
+            background: #101922;
+            border-radius: 8px;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+          "
+        >
+          <div>
+            <div id="uploadHint" style="font-weight: 600">
+              Drag connection_log.txt and content_log.txt here, or click to select files
+            </div>
+            <div id="uploadSubHint" style="opacity: 0.8; font-size: 12px; margin-top: 4px">
+              Upload connection_log.txt and content_log.txt to generate the visualization
+            </div>
+          </div>
+        </div>
+        <div
+          class="upload-controls"
+          style="
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            width: 100%;
+            justify-content: flex-start;
+          "
+        >
+          <label for="connLog" class="pill" id="connLabel"
+            >Connection Log (connection_log.txt)</label
+          >
+          <input type="file" id="connLog" accept=".txt" title="Choose connection_log.txt" />
+          <label for="contLog" class="pill" id="contLabel">Content Log (content_log.txt)</label>
+          <input type="file" id="contLog" accept=".txt" title="Choose content_log.txt" />
+        </div>
+      </section>
+
+      <section class="panel" id="sectionB" style="display: none; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+            <span class="pill" id="lblAccount">Account</span>
+            <select id="accountFilter">
+              <option value="">All accounts</option>
+            </select>
+            <span class="pill" id="lblSummaryYear">Year</span>
+            <select id="summaryYearFilter">
+              <option value=""></option>
+            </select>
+          </div>
+        </div>
+        <div id="overallText" style="color: var(--muted)"></div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 12px; align-items: stretch">
+
+          <div>
+            <div class="pill" id="lblTopAll" style="display: inline-block; margin-bottom: 6px">
+              All Games Playtime
+            </div>
+            <div id="topBar" class="panel" style="height: 460px; padding: 8px"></div>
+          </div>
+
+          <div>
+            <div class="pill" id="lblDonut" style="display: inline-block; margin-bottom: 6px">
+              Playtime Share
+            </div>
+            <div
+              id="donutWrap"
+              class="panel"
+              style="
+                height: 300px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            ></div>
+          </div>
+
+          <div>
+            <div class="pill" id="lblMonthChart" style="display: inline-block; margin-bottom: 6px">
+              Playtime by Month
+            </div>
+            <div id="monthChart" class="panel" style="height: 280px; padding: 8px"></div>
+          </div>
+
+          <div>
+            <div
+              class="pill"
+              id="lblDailyHeatmap"
+              style="display: inline-block; margin-bottom: 6px"
+            >
+              Daily Heatmap
+            </div>
+            <div id="calendarYear" class="panel" style="height: 220px; padding: 12px"></div>
+          </div>
+        </div>
+        <div id="yearSummary" class="summary-grid"></div>
+      </section>
+
+        <section class="panel" id="sectionC" style="display: none; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+            <span class="pill" id="lblGameAccount">Account</span>
+            <select id="gameAccountFilter">
+              <option value=""></option>
+            </select>
+            <span class="pill" id="lblGameYear">Year</span>
+            <select id="gameYearFilter">
+              <option value=""></option>
+            </select>
+            <span class="pill" id="lblGameSelect">Game</span>
+            <select id="gameSelect">
+              <option value="">—</option>
+            </select>
+          </div>
+          <div id="gameSummaryText" style="color: var(--muted)"></div>
+          <div style="display: grid; grid-template-columns: 1fr; gap: 12px; align-items: stretch">
+
+            <div>
+              <div class="pill" id="lblGameMonth" style="display: inline-block; margin-bottom: 6px">
+                Playtime by Month
+              </div>
+              <div id="gameMonthChart" class="panel" style="height: 280px; padding: 8px"></div>
+            </div>
+
+            <div>
+              <div class="pill" id="lblGameDailyHeatmap" style="display: inline-block; margin-bottom: 6px">
+                Daily Heatmap
+              </div>
+              <div id="gameCalendarYear" class="panel" style="height: 220px; padding: 12px"></div>
+            </div>
+          </div>
+        </section>
+
+    </main>
+
+    <div class="tooltip" id="tooltip"></div>
+    <script type="module" src="src/app.module.ts"></script>
+  </body>
+</html>
