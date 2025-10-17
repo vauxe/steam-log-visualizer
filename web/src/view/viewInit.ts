@@ -123,6 +123,7 @@ export function registerUIEvents(params: {
   if (uploadLink) {
     uploadLink.addEventListener('click', (event) => {
       event.preventDefault();
+      event.stopPropagation();
       manualPicker?.click();
     });
   }
