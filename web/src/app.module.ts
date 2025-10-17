@@ -5,7 +5,7 @@ import { parseService } from './state/parseService';
 import { AggregatorClient } from './state/aggregatorClient';
 import { loadAppList, resolveAppNamesFromCache } from './state/appListCache';
 import { applyStaticLabels, registerUIEvents } from './view/viewInit';
-import { renderApp, populateFilters, highlightMatches } from './view/renderPipeline';
+import { renderApp, populateFilters } from './view/renderPipeline';
 
 const i18n = createI18n('en');
 
@@ -45,7 +45,6 @@ registerUIEvents({
   AppState,
   onRender: () => renderApp(i18n, aggregatorClient, () => window.render()),
   onHandleParse: handleParse,
-  highlightMatches,
 });
 
 async function handleParse() {
@@ -79,9 +78,9 @@ async function handleParse() {
     if (summaryYearFilter) summaryYearFilter.value = String(y);
     // Show Summary and Per-game sections
     const sectionB = document.getElementById('sectionB') as HTMLElement | null;
-    if (sectionB) sectionB.style.display = 'flex';
+    sectionB?.classList.remove('is-hidden');
     const sectionC = document.getElementById('sectionC') as HTMLElement | null;
-    if (sectionC) sectionC.style.display = 'flex';
+    sectionC?.classList.remove('is-hidden');
     window.render();
   } catch (e: any) {
     console.error('parse failed', e);

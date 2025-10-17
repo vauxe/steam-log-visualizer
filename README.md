@@ -1,26 +1,23 @@
-# Steam Session Visualization
+# Steam Log Visualizer
 
-An interactive visualization for Steam play sessions built with Vite + ECharts. It parses connection_log.txt and content_log.txt, aggregates playtime, and renders multiple charts (24×7 heatmap, calendar heatmap, trends, treemap, etc.).
+Steam Log Visualizer is a browser-based dashboard for exploring personal Steam play history. Drop your `connection_log.txt` and `content_log.txt` files straight from the Steam client logs and the app reconstructs sessions, aggregates playtime, and renders interactive charts locally in browser.
 
-## Getting Started
+## Star Map
 
-```bash
-npm install
-npm run dev
-# build
-npm run build
-```
+The `Star Map` tab renders a point cloud of Steam titles using Three.js. It consumes the bundled dataset at `web/public/data/steam_dataset.csv` (an extract of the Steam app list with embeddings). Use the search or random buttons to highlight games and review basic metadata.
 
 ## Project Structure
 
 ```
 web/
-  src/                # new TS modules live here (progressively migrated)
-    aggregations/     # typed facades and future TS implementations
-    charts/           # chart rendering modules (to be migrated from assets/src)
-    i18n/             # en, zh-CN, and i18n runtime
-    state/            # cache, aggregator client, hashing
-    workers/          # worker types (future TS workers)
-  index.html
-vite.config.ts
+	src/
+		charts/          # ECharts renderers for dashboard widgets
+		parsers/         # Log parsing helpers (account/session reconstruction)
+		state/           # App state, aggregation cache, workers
+		starMap/         # Three.js star map entry point
+		workers/         # Aggregation workers invoked from the UI
 ```
+
+## License
+
+MIT

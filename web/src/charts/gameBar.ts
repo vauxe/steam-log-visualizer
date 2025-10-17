@@ -29,6 +29,8 @@ export async function renderGameBarTS(groups: Group[], onSelect?: (appid: string
     .sort((a, b) => b.sec - a.sec);
   const barEl = document.querySelector('#topBar') as HTMLElement | null;
   if (!barEl) return;
+  const desiredHeight = Math.max(320, Math.min(600, items.length * 32));
+  barEl.style.height = `${desiredHeight}px`;
   const chart = (getInstanceByDom(barEl) as any) || init(barEl, null, { renderer: 'canvas' });
   const i18n: any = (window as any).i18n;
   // Update label with current year suffix
@@ -39,33 +41,49 @@ export async function renderGameBarTS(groups: Group[], onSelect?: (appid: string
     const yearText = y ? String(y) : i18n?.t?.('allYears') || 'All years';
     lbl.textContent = `${(lbl as any).dataset.base} (${yearText})`;
   }
+  const formatHours = (value: number) => Number(value || 0).toFixed(1);
   const option = {
-    grid: { left: 40, right: 20, top: 20, bottom: 80 },
+    grid: { left: 180, right: 40, top: 12, bottom: 24 },
     tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
+      trigger: 'item',
       formatter: (params: any) => {
-        const p = Array.isArray(params) ? params[0] : params;
-        const v = p && p.data && (p.data.value ?? p.value);
-        const num = Number(v || 0).toFixed(2);
-        return `${p.name}: ${num} h`;
+        const v = params?.data?.value ?? params?.value;
+        return `${params?.name}: ${formatHours(v)} h`;
       },
     },
     xAxis: {
-      type: 'category',
-      data: items.map((x) => x.name),
-      axisLabel: { interval: 0, rotate: 30, color: '#c7d5e0' },
-    },
-    yAxis: {
       type: 'value',
       name: i18n?.t?.('hours') || 'Hours',
       nameLocation: 'end',
-      nameGap: 12,
-      axisLabel: { formatter: (v: any) => Number(v).toFixed(2) },
+      nameGap: 16,
+      axisLabel: {
+        color: '#c7d5e0',
+        formatter: (v: any) => formatHours(v),
+      },
+      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
+    },
+    yAxis: {
+      type: 'category',
+      inverse: true,
+      data: items.map((x) => x.name),
+      axisLabel: {
+        color: '#c7d5e0',
+        formatter: (value: string) => (value.length > 32 ? `${value.slice(0, 31)}…` : value),
+      },
     },
     series: [
       {
         type: 'bar',
+        barWidth: 18,
+        itemStyle: {
+          color: '#66c0f4',
+        },
+        label: {
+          show: true,
+          position: 'right',
+          color: '#c7d5e0',
+          formatter: (params: any) => `${formatHours(params.value)}h`,
+        },
         data: items.map((x) => ({
           value: Number((x.sec / 3600).toFixed(2)),
           name: x.name,

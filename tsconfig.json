@@ -9,7 +9,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "types": ["node", "vite/client"],
+    "types": ["node", "vite/client", "@webgpu/types"],
     "baseUrl": ".",
     "paths": {
       "@src/*": ["web/src/*"],

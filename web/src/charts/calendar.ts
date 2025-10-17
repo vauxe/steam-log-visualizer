@@ -15,6 +15,10 @@ export function renderCalendarHeatmapTS(
   if (!el.style.height) el.style.height = cell * 7 + 40 + 'px';
   const maxv = Math.max(0.1, ...data.map((d) => d[1]));
   const chart = (getInstanceByDom(el) as any) || init(el, null, { renderer: 'canvas' });
+  if (!data.length) {
+    chart.clear();
+    return;
+  }
   chart.setOption({
     tooltip: {
       show: true,

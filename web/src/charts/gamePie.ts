@@ -5,9 +5,7 @@ import { CanvasRenderer } from 'echarts/renderers';
 import type { Group } from '@types';
 import { AppState } from '@state/appState';
 
-
 import { createPieOption } from './options';
-
 
 use([PieChart, TooltipComponent, LegendComponent, CanvasRenderer]);
 

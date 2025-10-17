@@ -2,18 +2,27 @@ import { defineConfig } from 'vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import path from 'node:path';
 
-export default defineConfig({
-  root: 'web',
-  base: './',
-  plugins: [
+const webRoot = path.resolve(__dirname, 'web');
+const shouldAnalyze = String(process.env.ANALYZE || '').toLowerCase() === 'true';
+
+const plugins: import('vite').PluginOption[] = [];
+
+if (shouldAnalyze) {
+  plugins.push(
     visualizer({
       filename: 'stats.html',
       gzipSize: true,
       brotliSize: true,
       template: 'treemap',
       emitFile: true,
-    }),
-  ],
+    })
+  );
+}
+
+export default defineConfig({
+  root: 'web',
+  base: './',
+  plugins,
   resolve: {
     alias: {
       '@src': path.resolve(__dirname, 'web/src'),
@@ -31,6 +40,10 @@ export default defineConfig({
     emptyOutDir: true,
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
+      input: {
+        main: path.resolve(webRoot, 'index.html'),
+        starMap: path.resolve(webRoot, 'star-map.html'),
+      },
       output: {
         manualChunks: {
           echarts: ['echarts/core', 'echarts/charts', 'echarts/components', 'echarts/renderers'],

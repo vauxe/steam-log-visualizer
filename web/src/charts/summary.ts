@@ -4,7 +4,6 @@ import { GridComponent, TooltipComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { AppState } from '@state/appState';
 
-
 import { createBarOption } from './options';
 
 use([BarChart, GridComponent, TooltipComponent, CanvasRenderer]);

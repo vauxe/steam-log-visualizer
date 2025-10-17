@@ -7,8 +7,12 @@
     <link rel="stylesheet" href="assets/styles.css" />
   </head>
   <body>
-    <header class="steam-header">
+    <header class="steam-header layout-wide">
       <h1 id="title">Steam Session Visualization</h1>
+      <nav class="app-nav">
+        <a id="navDashboard" href="./index.html" class="active">Session Dashboard</a>
+        <a id="navStarMap" href="./star-map.html">Star Map</a>
+      </nav>
       <div class="controls">
         <select id="langSelect" title="Language">
           <option value="en" selected>EN</option>
@@ -17,148 +21,142 @@
       </div>
     </header>
 
-    <main>
-      <section class="panel" id="sectionA" style="display: flex; flex-direction: column; gap: 12px">
-        <div
-          id="uploadDrop"
-          class="panel"
-          style="
-            border: 1px dashed #294357;
-            background: #101922;
-            border-radius: 8px;
-            min-height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 12px;
-            cursor: pointer;
-          "
-        >
-          <div>
-            <div id="uploadHint" style="font-weight: 600">
-              Drag connection_log.txt and content_log.txt here, or click to select files
-            </div>
-            <div id="uploadSubHint" style="opacity: 0.8; font-size: 12px; margin-top: 4px">
-              Upload connection_log.txt and content_log.txt to generate the visualization
+    <main class="dashboard">
+      <div class="main-container">
+        <section class="panel panel-stack" id="sectionA">
+          <div class="panel-header">
+            <div class="panel-heading">
+              <h2 id="uploadTitle">Import Steam Logs</h2>
+              <p id="uploadSubtitle" class="panel-subtitle">
+                Drag both logs here or browse to upload.
+              </p>
             </div>
           </div>
-        </div>
-        <div
-          class="upload-controls"
-          style="
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            width: 100%;
-            justify-content: flex-start;
-          "
-        >
-          <label for="connLog" class="pill" id="connLabel"
-            >Connection Log (connection_log.txt)</label
-          >
-          <input type="file" id="connLog" accept=".txt" title="Choose connection_log.txt" />
-          <label for="contLog" class="pill" id="contLabel">Content Log (content_log.txt)</label>
-          <input type="file" id="contLog" accept=".txt" title="Choose content_log.txt" />
-        </div>
-      </section>
-
-      <section class="panel" id="sectionB" style="display: none; flex-direction: column; gap: 12px">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
-            <span class="pill" id="lblAccount">Account</span>
-            <select id="accountFilter">
-              <option value="">All accounts</option>
-            </select>
-            <span class="pill" id="lblSummaryYear">Year</span>
-            <select id="summaryYearFilter">
-              <option value=""></option>
-            </select>
-          </div>
-        </div>
-        <div id="overallText" style="color: var(--muted)"></div>
-        <div style="display: grid; grid-template-columns: 1fr; gap: 12px; align-items: stretch">
-
-          <div>
-            <div class="pill" id="lblTopAll" style="display: inline-block; margin-bottom: 6px">
-              All Games Playtime
+          <div id="uploadDrop" class="upload-drop" role="button" tabindex="0">
+            <div class="upload-copy">
+              <p class="upload-title" id="uploadHint">
+                <span id="uploadHintDrag">Drag connection_log.txt and content_log.txt here</span>
+                <span id="uploadHintOr" class="upload-separator">or</span>
+                <button type="button" id="uploadLink" class="upload-link">Browse files</button>
+              </p>
+              <p class="upload-disclaimer" id="uploadDisclaimer">
+                Processing runs entirely in your browser; nothing is uploaded.
+              </p>
+              <ul class="upload-steps">
+                <li id="uploadStepLocate">
+                  Locate Steam logs (e.g. C:\Program Files (x86)\Steam\logs).
+                </li>
+                <li id="uploadStepSelect">
+                  Select connection_log.txt and content_log.txt together.
+                </li>
+                <li id="uploadStepUpload">Drag them here or use Browse files.</li>
+              </ul>
             </div>
-            <div id="topBar" class="panel" style="height: 460px; padding: 8px"></div>
           </div>
+          <input type="file" id="manualPicker" accept=".txt" multiple hidden />
+          <input
+            type="file"
+            id="connLog"
+            accept=".txt"
+            title="Choose connection_log.txt"
+            class="visually-hidden"
+          />
+          <input
+            type="file"
+            id="contLog"
+            accept=".txt"
+            title="Choose content_log.txt"
+            class="visually-hidden"
+          />
+        </section>
 
-          <div>
-            <div class="pill" id="lblDonut" style="display: inline-block; margin-bottom: 6px">
-              Playtime Share
+        <section class="panel panel-stack is-hidden" id="sectionB">
+          <div class="panel-header">
+            <div class="filters-bar">
+              <span class="pill" id="lblAccount">Account</span>
+              <select id="accountFilter">
+                <option value="">All accounts</option>
+              </select>
+              <span class="pill" id="lblSummaryYear">Year</span>
+              <select id="summaryYearFilter">
+                <option value=""></option>
+              </select>
             </div>
-            <div
-              id="donutWrap"
-              class="panel"
-              style="
-                height: 300px;
-                padding: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
-            ></div>
           </div>
 
-          <div>
-            <div class="pill" id="lblMonthChart" style="display: inline-block; margin-bottom: 6px">
-              Playtime by Month
+          <div class="stat-board" aria-live="polite">
+            <article class="stat-card">
+              <p class="stat-card__label" id="lblStatSessions">Sessions</p>
+              <p class="stat-card__value" id="statSessions">0</p>
+            </article>
+            <article class="stat-card">
+              <p class="stat-card__label" id="lblStatDuration">Total Duration</p>
+              <p class="stat-card__value" id="statDuration">0</p>
+            </article>
+            <article class="stat-card">
+              <p class="stat-card__label" id="lblStatAccounts">Accounts</p>
+              <p class="stat-card__value" id="statAccounts">0</p>
+            </article>
+            <article class="stat-card">
+              <p class="stat-card__label" id="lblStatGames">Games</p>
+              <p class="stat-card__value" id="statGames">0</p>
+            </article>
+          </div>
+
+          <div class="chart-grid">
+            <div class="chart-card">
+              <div class="chart-card__title pill" id="lblTopAll">All Games Playtime</div>
+              <div id="topBar" class="chart-surface"></div>
             </div>
-            <div id="monthChart" class="panel" style="height: 280px; padding: 8px"></div>
-          </div>
-
-          <div>
-            <div
-              class="pill"
-              id="lblDailyHeatmap"
-              style="display: inline-block; margin-bottom: 6px"
-            >
-              Daily Heatmap
+            <div class="chart-card">
+              <div class="chart-card__title pill" id="lblDonut">Playtime Share</div>
+              <div id="donutWrap" class="chart-surface chart-surface--center"></div>
             </div>
-            <div id="calendarYear" class="panel" style="height: 220px; padding: 12px"></div>
-          </div>
-        </div>
-        <div id="yearSummary" class="summary-grid"></div>
-      </section>
-
-        <section class="panel" id="sectionC" style="display: none; flex-direction: column; gap: 12px">
-          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-            <span class="pill" id="lblGameAccount">Account</span>
-            <select id="gameAccountFilter">
-              <option value=""></option>
-            </select>
-            <span class="pill" id="lblGameYear">Year</span>
-            <select id="gameYearFilter">
-              <option value=""></option>
-            </select>
-            <span class="pill" id="lblGameSelect">Game</span>
-            <select id="gameSelect">
-              <option value="">—</option>
-            </select>
-          </div>
-          <div id="gameSummaryText" style="color: var(--muted)"></div>
-          <div style="display: grid; grid-template-columns: 1fr; gap: 12px; align-items: stretch">
-
-            <div>
-              <div class="pill" id="lblGameMonth" style="display: inline-block; margin-bottom: 6px">
-                Playtime by Month
-              </div>
-              <div id="gameMonthChart" class="panel" style="height: 280px; padding: 8px"></div>
+            <div class="chart-card">
+              <div class="chart-card__title pill" id="lblMonthChart">Playtime by Month</div>
+              <div id="monthChart" class="chart-surface"></div>
             </div>
+            <div class="chart-card">
+              <div class="chart-card__title pill" id="lblDailyHeatmap">Daily Heatmap</div>
+              <div id="calendarYear" class="chart-surface"></div>
+            </div>
+          </div>
 
-            <div>
-              <div class="pill" id="lblGameDailyHeatmap" style="display: inline-block; margin-bottom: 6px">
-                Daily Heatmap
-              </div>
-              <div id="gameCalendarYear" class="panel" style="height: 220px; padding: 12px"></div>
+          <div id="yearSummary" class="summary-grid"></div>
+        </section>
+
+        <section class="panel panel-stack is-hidden" id="sectionC">
+          <div class="panel-header">
+            <div class="filters-bar">
+              <span class="pill" id="lblGameAccount">Account</span>
+              <select id="gameAccountFilter">
+                <option value=""></option>
+              </select>
+              <span class="pill" id="lblGameYear">Year</span>
+              <select id="gameYearFilter">
+                <option value=""></option>
+              </select>
+              <span class="pill" id="lblGameSelect">Game</span>
+              <select id="gameSelect">
+                <option value="">—</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="gameSummaryText" class="overall-text"></div>
+
+          <div class="chart-grid">
+            <div class="chart-card">
+              <div class="chart-card__title pill" id="lblGameMonth">Playtime by Month</div>
+              <div id="gameMonthChart" class="chart-surface"></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-card__title pill" id="lblGameDailyHeatmap">Daily Heatmap</div>
+              <div id="gameCalendarYear" class="chart-surface"></div>
             </div>
           </div>
         </section>
-
+      </div>
     </main>
 
     <div class="tooltip" id="tooltip"></div>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Steam Star Map</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+    <link rel="stylesheet" href="assets/star-map.css" />
+  </head>
+  <body>
+    <header class="steam-header layout-wide">
+      <h1 id="title">Steam Star Map</h1>
+      <nav class="app-nav">
+        <a id="navDashboard" href="./index.html">Session Dashboard</a>
+        <a id="navStarMap" href="./star-map.html" class="active">Star Map</a>
+      </nav>
+      <div class="controls">
+        <select id="langSelect" title="Language">
+          <option value="en" selected>EN</option>
+          <option value="zh-CN">中文</option>
+        </select>
+      </div>
+    </header>
+
+    <div class="layout-constrained" style="padding: 0 16px 16px">
+      <div id="search" role="search" aria-label="Search games">
+        <input id="q" list="suggestions" autocomplete="off" placeholder="Search name or appID" />
+        <datalist id="suggestions"></datalist>
+        <button id="btnSearch" type="button">Jump</button>
+        <button id="btnRandom" type="button">Random</button>
+      </div>
+    </div>
+
+    <div id="app" aria-label="Star map canvas"></div>
+    <div id="hud">loading...</div>
+    <div id="panel"></div>
+    <div id="hoverTip"></div>
+
+    <script type="module" src="src/starMap/main.ts"></script>
+  </body>
+</html>

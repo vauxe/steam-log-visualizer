@@ -21,7 +21,7 @@ export function attributeSessionsToAccounts(
     let uid = 'UNKNOWN';
     if (i < n) {
       const iv = aSorted[i];
-      if (!iv.end || +g.start <= +iv.end) {
+      if (!iv.end || +g.start >= +iv.start) {
         uid = iv.uid;
       }
     }
