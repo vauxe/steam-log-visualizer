@@ -9,6 +9,11 @@ import { renderApp, populateFilters } from './view/renderPipeline';
 
 const i18n = createI18n('en');
 
+// Warm up the AppList cache as soon as the bundle loads so lookups are instant when users upload logs.
+loadAppList().catch((err) => {
+  console.warn('App list preload failed; will retry on demand', err);
+});
+
 declare global {
   interface Window {
     i18n: any;

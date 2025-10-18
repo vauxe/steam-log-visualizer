@@ -1,7 +1,16 @@
 let _cache: Record<string, string> | null = null;
-let _loadedUrl: string | null = null;
+let _pendingLoad: Promise<Record<string, string>> | null = null;
 
-const BUNDLED_APP_LIST_URL = new URL('../../assets/data/applist.min.json', import.meta.url).href;
+const PUBLIC_APP_LIST_PATH = 'data/applist.min.json';
+
+function resolveBundledAppListUrl() {
+  const base = (import.meta.env.BASE_URL || '/').trim();
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+  if (typeof window !== 'undefined') {
+    return new URL(PUBLIC_APP_LIST_PATH, new URL(normalizedBase, window.location.href)).href;
+  }
+  return `${normalizedBase}${PUBLIC_APP_LIST_PATH}`;
+}
 
 function normalize(json: any) {
   if (json && typeof json === 'object' && !Array.isArray(json)) {
@@ -19,44 +28,32 @@ function normalize(json: any) {
   return {} as Record<string, string>;
 }
 
-export async function loadAppList(url: string | undefined = undefined) {
-  const preferred = url ?? BUNDLED_APP_LIST_URL;
-  const candidates: string[] = [];
-  const addCandidate = (candidate: string) => {
-    if (!candidate || candidates.includes(candidate)) return;
-    candidates.push(candidate);
-  };
+export async function loadAppList(url?: string) {
+  if (_cache) return _cache;
+  if (_pendingLoad) return _pendingLoad;
 
-  addCandidate(preferred);
+  const targetUrl = url || resolveBundledAppListUrl();
 
-  const isAbsoluteUrl = /^(?:[a-z]+:)?\/\//i.test(preferred);
-  if (!isAbsoluteUrl && !preferred.startsWith('/')) addCandidate(`/${preferred}`);
-  let lastErr: any = null;
-  for (const u of candidates) {
-    try {
-      if (_cache && _loadedUrl === u) return _cache;
-      const r = await fetch(u, { cache: 'force-cache' });
-      if (!r.ok) {
-        lastErr = new Error(`Failed to load AppList cache: HTTP ${r.status} @ ${u}`);
-        continue;
-      }
-      const ct = (r.headers.get('content-type') || '').toLowerCase();
-      if (ct && !ct.includes('json')) {
-        const t = await r.text();
-        lastErr = new Error(
-          `Non-JSON (${ct || 'unknown'}) from ${u}, first bytes: ${t.slice(0, 60).replace(/\s+/g, ' ')}`
-        );
-        continue;
-      }
-      const j = await r.json();
-      _cache = normalize(j);
-      _loadedUrl = u;
-      return _cache;
-    } catch (e) {
-      lastErr = e;
+  _pendingLoad = (async () => {
+    const r = await fetch(targetUrl, { cache: 'force-cache' });
+    if (!r.ok) throw new Error(`Failed to load AppList cache: HTTP ${r.status} @ ${targetUrl}`);
+    const ct = (r.headers.get('content-type') || '').toLowerCase();
+    if (ct && !ct.includes('json')) {
+      const t = await r.text();
+      throw new Error(
+        `Non-JSON (${ct || 'unknown'}) from ${targetUrl}, first bytes: ${t.slice(0, 60).replace(/\s+/g, ' ')}`
+      );
     }
+    const j = await r.json();
+    _cache = normalize(j);
+    return _cache;
+  })();
+
+  try {
+    return await _pendingLoad;
+  } finally {
+    _pendingLoad = null;
   }
-  throw lastErr || new Error('Failed to load AppList cache');
 }
 
 export function resolveAppNamesFromCache(appids: string[]) {
