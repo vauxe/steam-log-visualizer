@@ -6,19 +6,26 @@ use([HeatmapChart, CalendarComponent, TooltipComponent, VisualMapComponent, Canv
 
 export function renderCalendarHeatmapTS(
   el: HTMLElement | null,
-  year: number,
+  year: number | null,
   data: [string, number][]
 ) {
   if (!el) return;
-  const width = el.clientWidth || el.getBoundingClientRect().width || 600;
-  const cell = Math.max(8, Math.floor((width - 40) / 53));
-  if (!el.style.height) el.style.height = cell * 7 + 40 + 'px';
-  const maxv = Math.max(0.1, ...data.map((d) => d[1]));
   const chart = (getInstanceByDom(el) as any) || init(el, null, { renderer: 'canvas' });
-  if (!data.length) {
+  if (!year) {
     chart.clear();
     return;
   }
+
+  const width = el.clientWidth || el.getBoundingClientRect().width || 600;
+  const cell = Math.max(8, Math.floor((width - 40) / 53));
+  if (!el.style.height) el.style.height = cell * 7 + 40 + 'px';
+  const dataset = data || [];
+  if (!dataset.length) {
+    chart.clear();
+    return;
+  }
+  const maxv = Math.max(0.1, ...dataset.map((d) => d[1]));
+
   chart.setOption({
     tooltip: {
       show: true,
@@ -52,7 +59,7 @@ export function renderCalendarHeatmapTS(
       {
         type: 'heatmap',
         coordinateSystem: 'calendar',
-        data,
+        data: dataset,
         itemStyle: { borderRadius: 3, borderWidth: 2, borderColor: '#0b1220' },
       },
     ],

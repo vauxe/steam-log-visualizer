@@ -1,4 +1,4 @@
-import type { Session } from '@types';
+import type { Filters, Session } from '@types';
 import { AppState } from '@state/appState';
 
 import { createI18n } from './i18n';
@@ -6,7 +6,7 @@ import { parseService } from './state/parseService';
 import { AggregatorClient } from './state/aggregatorClient';
 import { loadAppList, resolveAppNamesFromCache } from './state/appListCache';
 import { applyStaticLabels, registerUIEvents } from './view/viewInit';
-import { renderApp, populateFilters } from './view/renderPipeline';
+import { renderApp, populateFilters, getAvailableYearsFromSessions } from './view/renderPipeline';
 
 const i18n = createI18n('en');
 
@@ -74,16 +74,31 @@ function setUploadBusy(busy: boolean) {
 
 function applySessionsToDashboard(sessions: Session[], opts: { initial: boolean }) {
   AppState.setSessions(sessions);
+  const years = getAvailableYearsFromSessions(sessions);
+  const latestYear = years.length ? years[0] : null;
+
+  if (opts.initial) {
+    const defaultYear = (latestYear ?? '') as Filters['year'];
+    AppState.setFilter('year', defaultYear);
+    AppState.setFilter('yearGame', defaultYear as Filters['yearGame']);
+    AppState.setFilter('appidGame', '' as Filters['appidGame']);
+    if (!(AppState.getFilter('accountGame') as string)) {
+      AppState.setFilter('accountGame', (AppState.getFilter('account') as string) || '');
+    }
+  } else {
+    const currentYear = AppState.getFilter('year') as Filters['year'];
+    if (typeof currentYear === 'number' && !years.includes(currentYear)) {
+      AppState.setFilter('year', (latestYear ?? '') as Filters['year']);
+    }
+    const currentYearGame = AppState.getFilter('yearGame') as Filters['yearGame'];
+    if (typeof currentYearGame === 'number' && !years.includes(currentYearGame)) {
+      AppState.setFilter('yearGame', (latestYear ?? '') as Filters['yearGame']);
+    }
+  }
+
   populateFilters();
 
   if (opts.initial) {
-    const y = new Date().getFullYear();
-    AppState.setFilter('year', y as any);
-    const summaryYearFilter = document.getElementById(
-      'summaryYearFilter'
-    ) as HTMLSelectElement | null;
-    if (summaryYearFilter) summaryYearFilter.value = String(y);
-
     const sectionB = document.getElementById('sectionB') as HTMLElement | null;
     sectionB?.classList.remove('is-hidden');
     const sectionC = document.getElementById('sectionC') as HTMLElement | null;

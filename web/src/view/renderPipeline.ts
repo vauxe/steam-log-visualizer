@@ -18,7 +18,7 @@ import { AppState, getFilteredSessions } from '@state/appState';
 import type { AggregatorClient } from '@state/aggregatorClient';
 import { makeAggregator } from '@state/aggregatorBound';
 import { createBarOption } from '@charts/options';
-import type { Session } from '@types';
+import type { Filters, Session } from '@types';
 
 echartsUse([ECBarChart, ECGridComponent, ECTooltipComponent, ECCanvasRenderer]);
 
@@ -33,6 +33,15 @@ const ALL_YEARS_LABEL = () => {
   const i18n: any = (window as any).i18n;
   return i18n?.t?.('allYears') || 'All years';
 };
+
+export function getAvailableYearsFromSessions(sessions: Session[]): number[] {
+  const years = new Set<number>();
+  sessions.forEach((session) => {
+    const year = session.start?.getFullYear?.();
+    if (typeof year === 'number' && !Number.isNaN(year)) years.add(year);
+  });
+  return Array.from(years).sort((a, b) => b - a);
+}
 
 function groupByGame(sessions: Session[]): GameGroup[] {
   const byGame = new Map<string, GameGroup>();
@@ -111,16 +120,14 @@ function syncPerGameFilters(appid: string, year: number, account: string) {
 
 async function computeAllAggregations(
   client: AggregatorClient | null,
-  sessions: Session[]
+  sessions: Session[],
+  year: number | null
 ): Promise<{ months: number[]; yearData: [string, number][] }> {
-  if (!client || !sessions.length) return { months: [], yearData: [] };
+  if (!client || !sessions.length || !year) return { months: [], yearData: [] };
   const aggregator = makeAggregator(client, () => ({ sessions, filters: AppState.getFilters() }));
-  const selectedYear = (AppState.getFilter('year') as number | '') || new Date().getFullYear();
-  const targetYear =
-    typeof selectedYear === 'number' && selectedYear > 0 ? selectedYear : new Date().getFullYear();
   const [monthAgg, dayAgg] = await Promise.all([
-    aggregator('month', { sessions, opts: { fillYear: targetYear } }),
-    aggregator('day', { sessions, opts: { fillYear: targetYear } }),
+    aggregator('month', { sessions, opts: { fillYear: year } }),
+    aggregator('day', { sessions, opts: { fillYear: year } }),
   ]);
   return {
     months: monthAgg?.values || [],
@@ -128,7 +135,8 @@ async function computeAllAggregations(
   };
 }
 
-function pickTopGameForContext(allSessions: Session[], year: number, account: string) {
+function pickTopGameForContext(allSessions: Session[], year: number | null, account: string) {
+  if (!year) return '';
   const filtered = allSessions.filter((session) => {
     if (account && session.account_id !== account) return false;
     return session.start?.getFullYear?.() === year;
@@ -160,10 +168,13 @@ export async function renderApp(
 
   let months: number[] = [];
   let yearData: [string, number][] = [];
-  if (sessions.length) {
+  const globalYearRaw = AppState.getFilter('year') as number | '';
+  const selectedYear =
+    typeof globalYearRaw === 'number' && globalYearRaw > 0 ? globalYearRaw : null;
+  if (sessions.length && selectedYear) {
     showLoading(true);
     try {
-      const agg = await computeAllAggregations(aggregatorClient, sessions);
+      const agg = await computeAllAggregations(aggregatorClient, sessions, selectedYear);
       months = agg.months || [];
       yearData = agg.yearData || [];
     } finally {
@@ -175,34 +186,49 @@ export async function renderApp(
 
   renderTextSummary(i18n, sessions, groups);
 
-  const globalYear = (AppState.getFilter('year') as number | '') || '';
   const globalAccount = (AppState.getFilter('account') as string) || '';
-  const fallbackYear =
-    typeof globalYear === 'number' && globalYear > 0 ? globalYear : new Date().getFullYear();
+  const perGameYearRaw = AppState.getFilter('yearGame') as number | '';
 
   const handlePrimaryGameSelect = (appid: string) => {
-    syncPerGameFilters(appid, fallbackYear, globalAccount);
+    const currentYear =
+      typeof globalYearRaw === 'number' && globalYearRaw > 0
+        ? globalYearRaw
+        : typeof perGameYearRaw === 'number' && perGameYearRaw > 0
+          ? perGameYearRaw
+          : null;
+    if (!currentYear || !appid) return;
+    syncPerGameFilters(appid, currentYear, globalAccount);
     if (onRender) onRender();
   };
 
   renderGameBarTS(groups, handlePrimaryGameSelect);
   renderGamePieTS(groups, handlePrimaryGameSelect);
-  renderMonthChartTS(months || []);
+  updateLabelWithYear('lblMonthChart', selectedYear ?? '', ALL_YEARS_LABEL());
+  renderMonthChartTS(selectedYear ? months : null);
 
-  updateLabelWithYear('lblDailyHeatmap', globalYear, ALL_YEARS_LABEL());
-  renderCalendarHeatmapTS(document.getElementById('calendarYear'), fallbackYear, yearData || []);
+  updateLabelWithYear('lblDailyHeatmap', selectedYear ?? '', ALL_YEARS_LABEL());
+  const calendarTarget = document.getElementById('calendarYear');
+  const calendarData: [string, number][] = selectedYear ? yearData : [];
+  renderCalendarHeatmapTS(calendarTarget, selectedYear, calendarData);
 
   const allSessions = AppState.getSessions();
-  const topGame = pickTopGameForContext(allSessions, fallbackYear, globalAccount);
+  const availableYears = getAvailableYearsFromSessions(allSessions);
+  const yearForGameContext =
+    typeof globalYearRaw === 'number' && globalYearRaw > 0
+      ? globalYearRaw
+      : typeof perGameYearRaw === 'number' && perGameYearRaw > 0
+        ? perGameYearRaw
+        : availableYears[0] || null;
+  const topGame = pickTopGameForContext(allSessions, yearForGameContext, globalAccount);
   const currentGame = (AppState.getFilter('appidGame') as string) || '';
   const contextChanged =
-    globalYear !== lastGlobalContext.year || globalAccount !== lastGlobalContext.account;
+    globalYearRaw !== lastGlobalContext.year || globalAccount !== lastGlobalContext.account;
 
-  if ((contextChanged && topGame) || (!currentGame && topGame)) {
-    syncPerGameFilters(topGame, fallbackYear, globalAccount);
+  if (yearForGameContext && ((contextChanged && topGame) || (!currentGame && topGame))) {
+    syncPerGameFilters(topGame, yearForGameContext, globalAccount);
   }
 
-  lastGlobalContext = { year: globalYear, account: globalAccount };
+  lastGlobalContext = { year: globalYearRaw, account: globalAccount };
 
   await renderGameDetails(i18n, aggregatorClient);
 }
@@ -267,12 +293,24 @@ async function renderGameDetails(i18n: any, client: AggregatorClient | null) {
 
   const yearFromFilter = (AppState.getFilter('yearGame') as number | '') || '';
   const globalYear = (AppState.getFilter('year') as number | '') || '';
+  const availableYears = getAvailableYearsFromSessions(scopedSessions);
   const selectedYear =
     typeof yearFromFilter === 'number' && yearFromFilter > 0
       ? yearFromFilter
       : typeof globalYear === 'number' && globalYear > 0
         ? globalYear
-        : new Date().getFullYear();
+        : availableYears[0] || null;
+
+  if (!selectedYear) {
+    if (summaryEl) summaryEl.textContent = '';
+    if (monthChartEl) (getECByDom(monthChartEl as HTMLElement) as any)?.clear?.();
+    if (heatmapEl) (getECByDom(heatmapEl as HTMLElement) as any)?.clear?.();
+    return;
+  }
+
+  if ((AppState.getFilter('yearGame') as Filters['yearGame']) !== selectedYear) {
+    AppState.setFilter('yearGame', selectedYear as Filters['yearGame']);
+  }
 
   setSelectValue('gameYearFilter', String(selectedYear));
   setSelectValue('gameAccountFilter', accountGame || '');
@@ -343,9 +381,7 @@ export function populateFilters() {
   const i18n: any = (window as any).i18n;
 
   const accounts = Array.from(new Set(sessions.map((session) => session.account_id))).sort();
-  const years = Array.from(new Set(sessions.map((session) => session.start.getFullYear()))).sort(
-    (a, b) => b - a
-  );
+  const years = getAvailableYearsFromSessions(sessions);
   const games = Array.from(
     new Map(sessions.map((session) => [session.appid, session.app_name || session.appid])).entries()
   )
@@ -387,18 +423,19 @@ export function populateFilters() {
 
   // Re-apply current selections if still valid
   setSelectValue('accountFilter', (AppState.getFilter('account') as string) || '');
-  setSelectValue(
-    'summaryYearFilter',
-    (AppState.getFilter('year') as number | '') ? String(AppState.getFilter('year') as number) : ''
-  );
+  const rawGlobalYear = AppState.getFilter('year') as number | '';
+  setSelectValue('summaryYearFilter', rawGlobalYear ? String(rawGlobalYear) : '');
   setSelectValue(
     'gameAccountFilter',
     (AppState.getFilter('accountGame') as string) || (AppState.getFilter('account') as string) || ''
   );
+  const rawYearGame = AppState.getFilter('yearGame') as number | '';
   const preferredYear =
-    (AppState.getFilter('yearGame') as number | '') ||
-    (AppState.getFilter('year') as number | '') ||
-    (years.length ? years[0] : '');
+    (typeof rawYearGame === 'number' && rawYearGame > 0
+      ? rawYearGame
+      : typeof rawGlobalYear === 'number' && rawGlobalYear > 0
+        ? rawGlobalYear
+        : '') || (years.length ? years[0] : '');
   if (preferredYear) setSelectValue('gameYearFilter', String(preferredYear));
   setSelectValue('gameSelect', (AppState.getFilter('appidGame') as string) || '');
 }
