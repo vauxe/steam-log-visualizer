@@ -1,6 +1,8 @@
 let _cache: Record<string, string> | null = null;
 let _loadedUrl: string | null = null;
 
+const BUNDLED_APP_LIST_URL = new URL('../../assets/data/applist.min.json', import.meta.url).href;
+
 function normalize(json: any) {
   if (json && typeof json === 'object' && !Array.isArray(json)) {
     if (json.applist && Array.isArray(json.applist.apps)) {
@@ -17,8 +19,18 @@ function normalize(json: any) {
   return {} as Record<string, string>;
 }
 
-export async function loadAppList(url = 'assets/data/applist.min.json') {
-  const candidates = Array.from(new Set([url, url.startsWith('/') ? url : '/' + url]));
+export async function loadAppList(url: string | undefined = undefined) {
+  const preferred = url ?? BUNDLED_APP_LIST_URL;
+  const candidates: string[] = [];
+  const addCandidate = (candidate: string) => {
+    if (!candidate || candidates.includes(candidate)) return;
+    candidates.push(candidate);
+  };
+
+  addCandidate(preferred);
+
+  const isAbsoluteUrl = /^(?:[a-z]+:)?\/\//i.test(preferred);
+  if (!isAbsoluteUrl && !preferred.startsWith('/')) addCandidate(`/${preferred}`);
   let lastErr: any = null;
   for (const u of candidates) {
     try {
