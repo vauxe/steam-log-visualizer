@@ -1,6 +1,14 @@
 # Steam Log Visualizer
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://vauxe.github.io/steam-log-visualizer/)
+
 Steam Log Visualizer is a browser-based dashboard for exploring personal Steam play history. Drop your `connection_log.txt` and `content_log.txt` files straight from the Steam client logs and the app reconstructs sessions, aggregates playtime, and renders interactive charts locally in browser.
+
+## Live Demo
+
+This project is deployed on GitHub Pages. You can try it out instantly in your browser.
+
+**https://vauxe.github.io/steam-log-visualizer/**
 
 ## Quick Start
 
