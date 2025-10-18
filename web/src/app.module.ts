@@ -1,3 +1,4 @@
+import type { Session } from '@types';
 import { AppState } from '@state/appState';
 
 import { createI18n } from './i18n';
@@ -29,6 +30,98 @@ applyStaticLabels(i18n);
 const $ = (sel: string) => document.querySelector(sel) as any;
 const connLog = $('#connLog') as HTMLInputElement;
 const contLog = $('#contLog') as HTMLInputElement;
+const manualPicker = $('#manualPicker') as HTMLInputElement | null;
+const uploadDrop = document.getElementById('uploadDrop') as HTMLElement | null;
+const uploadSection = document.getElementById('sectionA') as HTMLElement | null;
+
+let activeParseToken = 0;
+
+function setUploadBusy(busy: boolean) {
+  if (uploadDrop) {
+    uploadDrop.classList.toggle('is-busy', busy);
+    uploadDrop.setAttribute('aria-busy', busy ? 'true' : 'false');
+    let mask = document.getElementById('uploadBusyMask') as HTMLElement | null;
+    if (busy) {
+      if (!mask) {
+        mask = document.createElement('div');
+        mask.id = 'uploadBusyMask';
+        mask.className = 'upload-drop__mask';
+        const row = document.createElement('div');
+        row.className = 'loading-row';
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner';
+        const label = document.createElement('span');
+        label.dataset.uploadBusyLabel = 'true';
+        row.append(spinner, label);
+        mask.appendChild(row);
+        uploadDrop.appendChild(mask);
+      }
+      if (mask) {
+        const label = mask.querySelector('[data-upload-busy-label]') as HTMLElement | null;
+        if (label) label.textContent = i18n.t('processingLogs') || 'Processing logs...';
+      }
+    } else if (mask) {
+      mask.remove();
+    }
+  }
+
+  if (uploadSection) uploadSection.setAttribute('aria-busy', busy ? 'true' : 'false');
+
+  [manualPicker, connLog, contLog].forEach((input) => {
+    if (input) input.disabled = busy;
+  });
+}
+
+function applySessionsToDashboard(sessions: Session[], opts: { initial: boolean }) {
+  AppState.setSessions(sessions);
+  populateFilters();
+
+  if (opts.initial) {
+    const y = new Date().getFullYear();
+    AppState.setFilter('year', y as any);
+    const summaryYearFilter = document.getElementById(
+      'summaryYearFilter'
+    ) as HTMLSelectElement | null;
+    if (summaryYearFilter) summaryYearFilter.value = String(y);
+
+    const sectionB = document.getElementById('sectionB') as HTMLElement | null;
+    sectionB?.classList.remove('is-hidden');
+    const sectionC = document.getElementById('sectionC') as HTMLElement | null;
+    sectionC?.classList.remove('is-hidden');
+  }
+
+  window.render();
+}
+
+async function hydrateSessionsWithAppNames(token: number, sessions: Session[]) {
+  try {
+    await loadAppList();
+    if (token !== activeParseToken) return;
+
+    const ids = Array.from(new Set(sessions.map((s) => s.appid))).filter((id): id is string =>
+      Boolean(id)
+    );
+    if (!ids.length) return;
+
+    const nameMap = resolveAppNamesFromCache(ids);
+    let changed = false;
+    const enriched = sessions.map((s) => {
+      const nextName = nameMap[s.appid];
+      if (nextName && nextName !== (s.app_name || s.appid)) {
+        changed = true;
+        return { ...s, app_name: nextName };
+      }
+      return s;
+    });
+
+    if (!changed) return;
+    if (token !== activeParseToken) return;
+
+    applySessionsToDashboard(enriched, { initial: false });
+  } catch (err) {
+    console.warn('loadAppList/resolveAppNamesFromCache failed, fallback to appid only', err);
+  }
+}
 
 let aggregatorClient: AggregatorClient | null = null;
 (function ensureAggregator() {
@@ -53,6 +146,7 @@ registerUIEvents({
 });
 
 async function handleParse() {
+  if (parseService.isBusy()) return;
   const f1 = connLog.files && connLog.files[0];
   const f2 = contLog.files && contLog.files[0];
   if (!f1 || !f2) {
@@ -60,35 +154,15 @@ async function handleParse() {
     return;
   }
   try {
-    let sessions = await parseService.parse(f1, f2);
-    try {
-      await loadAppList();
-      const ids = Array.from(new Set(sessions.map((s: any) => s.appid)));
-      const nameMap = resolveAppNamesFromCache(ids);
-      sessions = sessions.map((s: any) => ({
-        ...s,
-        app_name: (nameMap as any)[s.appid] || s.app_name || s.appid,
-      }));
-    } catch (err) {
-      console.warn('loadAppList/resolveAppNamesFromCache failed, fallback to appid only', err);
-    }
-    AppState.setSessions(sessions);
-    populateFilters();
-    // Default to current year for Summary charts (global year filter)
-    const y = new Date().getFullYear();
-    AppState.setFilter('year', y as any);
-    const summaryYearFilter = document.getElementById(
-      'summaryYearFilter'
-    ) as HTMLSelectElement | null;
-    if (summaryYearFilter) summaryYearFilter.value = String(y);
-    // Show Summary and Per-game sections
-    const sectionB = document.getElementById('sectionB') as HTMLElement | null;
-    sectionB?.classList.remove('is-hidden');
-    const sectionC = document.getElementById('sectionC') as HTMLElement | null;
-    sectionC?.classList.remove('is-hidden');
-    window.render();
+    setUploadBusy(true);
+    const token = ++activeParseToken;
+    const sessions = (await parseService.parse(f1, f2)) as Session[];
+    applySessionsToDashboard(sessions, { initial: true });
+    void hydrateSessionsWithAppNames(token, sessions);
   } catch (e: any) {
     console.error('parse failed', e);
     alert(i18n.t('alertParseFailed', e?.message || String(e)));
+  } finally {
+    setUploadBusy(false);
   }
 }

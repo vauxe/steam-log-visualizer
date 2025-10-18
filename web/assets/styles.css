@@ -309,11 +309,34 @@ button:focus {
   justify-content: center;
   text-align: center;
   padding: 32px 24px;
+  position: relative;
   cursor: pointer;
   transition:
     border-color var(--transition),
     box-shadow var(--transition),
     transform var(--transition);
+}
+
+.upload-drop.is-busy {
+  cursor: progress;
+}
+
+.upload-drop.is-busy .upload-copy {
+  opacity: 0.35;
+  filter: saturate(0.6);
+  transition: opacity 0.2s ease;
+}
+
+.upload-drop__mask {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(10, 19, 32, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 2;
 }
 
 .upload-drop:focus-visible,

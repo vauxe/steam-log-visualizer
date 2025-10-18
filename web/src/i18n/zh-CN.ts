@@ -51,6 +51,7 @@ export default {
   days: '天',
   longestSession: '最长单次会话',
   processingSessions: '正在处理会话…',
+  processingLogs: '正在解析日志…',
   // Alerts
   alertSelectLogs: '请先选择 connection_log.txt 和 content_log.txt',
   alertParseFailed: (m: string) => `解析失败：${m}`,

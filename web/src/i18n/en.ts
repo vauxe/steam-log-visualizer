@@ -52,6 +52,7 @@ export default {
   days: 'days',
   longestSession: 'Longest session',
   processingSessions: 'Processing sessions...',
+  processingLogs: 'Processing logs...',
   // Alerts
   alertSelectLogs: 'Please select connection_log.txt and content_log.txt first',
   alertParseFailed: (m: string) => `Parse failed: ${m}`,
