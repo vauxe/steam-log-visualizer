@@ -4,6 +4,9 @@ import path from 'node:path';
 
 const webRoot = path.resolve(__dirname, 'web');
 const shouldAnalyze = String(process.env.ANALYZE || '').toLowerCase() === 'true';
+const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || '';
+const isGitHubActions = String(process.env.GITHUB_ACTIONS || '').toLowerCase() === 'true';
+const basePath = isGitHubActions && repoName ? `/${repoName}/` : './';
 
 const plugins: import('vite').PluginOption[] = [];
 
@@ -21,7 +24,7 @@ if (shouldAnalyze) {
 
 export default defineConfig({
   root: 'web',
-  base: './',
+  base: basePath,
   plugins,
   resolve: {
     alias: {
